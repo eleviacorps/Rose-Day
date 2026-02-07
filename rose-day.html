@@ -1,0 +1,1391 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rose Day</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&display=swap");
+
+:root{
+  --bg-1:#060306;
+  --bg-2:#100710;
+  --bg-3:#030205;
+  --pink-100:#ffeef8;
+  --pink-200:#ffd7eb;
+  --pink-300:#ffb6d8;
+  --pink-400:#ff7db9;
+  --pink-500:#de4f92;
+  --rose-red:#be145f;
+  --leaf-1:#88db9d;
+  --leaf-2:#2f8c58;
+  --ink:#fff6fb;
+  --panel:rgba(255, 255, 255, 0.08);
+  --panel-stroke:rgba(255, 255, 255, 0.2);
+  --shadow:0 16px 40px rgba(0, 0, 0, .48);
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html,
+body{
+  margin:0;
+  width:100%;
+  height:100%;
+  min-height:100dvh;
+  overflow:hidden;
+}
+
+body{
+  font-family:"Sniglet", "Comic Sans MS", cursive;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 18% 14%, #2b1121 0%, transparent 34%),
+    radial-gradient(circle at 82% 12%, #281322 0%, transparent 32%),
+    radial-gradient(circle at 50% 84%, #1b0e1f 0%, transparent 46%),
+    linear-gradient(135deg, var(--bg-1), var(--bg-2) 54%, var(--bg-3) 100%);
+}
+
+body::before,
+body::after{
+  content:"";
+  position:fixed;
+  width:42vmax;
+  height:42vmax;
+  border-radius:50%;
+  pointer-events:none;
+  filter:blur(22px);
+  opacity:.24;
+  mix-blend-mode:screen;
+}
+
+body::before{
+  top:-23vmax;
+  right:-10vmax;
+  background:radial-gradient(circle, rgba(255,116,176,.55), rgba(255,116,176,0));
+  animation:drift 14s ease-in-out infinite alternate;
+}
+
+body::after{
+  bottom:-22vmax;
+  left:-15vmax;
+  background:radial-gradient(circle, rgba(255,150,202,.25), rgba(255,150,202,0));
+  animation:drift 16s ease-in-out infinite alternate-reverse;
+}
+
+.ambient{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+  pointer-events:none;
+  z-index:0;
+}
+
+#particleField .particle{
+  position:absolute;
+  bottom:-12vh;
+  width:var(--size);
+  height:var(--size);
+  border-radius:50%;
+  background:rgba(255, 232, 245, .82);
+  box-shadow:0 0 12px rgba(255, 182, 220, .85);
+  left:var(--left);
+  opacity:.3;
+  animation:particleFloat var(--dur) linear infinite;
+  animation-delay:var(--delay);
+}
+
+#heartField{
+  opacity:0;
+  transition:opacity .8s ease;
+}
+
+body.after-first #heartField{
+  opacity:.92;
+}
+
+.heartParticle{
+  position:absolute;
+  bottom:-14vh;
+  width:var(--size);
+  height:var(--size);
+  left:var(--left);
+  transform:rotate(45deg);
+  background:linear-gradient(145deg, #ffcae4, #ff6db4);
+  border-radius:3px;
+  opacity:.7;
+  filter:drop-shadow(0 0 10px rgba(255, 121, 184, .7));
+  animation:heartFloat var(--dur) linear infinite;
+  animation-delay:var(--delay);
+}
+
+.heartParticle::before,
+.heartParticle::after{
+  content:"";
+  position:absolute;
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background:inherit;
+}
+
+.heartParticle::before{
+  left:-50%;
+}
+
+.heartParticle::after{
+  top:-50%;
+}
+
+.scene{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  padding:
+    calc(22px + env(safe-area-inset-top))
+    calc(22px + env(safe-area-inset-right))
+    calc(22px + env(safe-area-inset-bottom))
+    calc(22px + env(safe-area-inset-left));
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .95s ease;
+  z-index:1;
+}
+
+.scene > *{
+  flex-shrink:0;
+}
+
+.scene.active{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.sceneTag{
+  margin:0;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  font-size:.76rem;
+  color:rgba(255, 225, 242, .9);
+}
+
+.sceneTitle{
+  margin:0;
+  font-family:"Sniglet", "Comic Sans MS", cursive;
+  font-weight:400;
+  font-size:clamp(2.3rem, 6.7vw, 4.2rem);
+  letter-spacing:.02em;
+  line-height:.95;
+  color:var(--pink-100);
+  text-shadow:0 1px 0 rgba(255, 255, 255, .08);
+}
+
+.panel{
+  width:min(94vw, 970px);
+  border-radius:30px;
+  border:1px solid var(--panel-stroke);
+  background:linear-gradient(165deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(6px);
+  padding:26px clamp(16px, 3.7vw, 34px);
+}
+
+button.nextBtn{
+  margin-top:16px;
+  padding:11px 22px;
+  border:none;
+  border-radius:999px;
+  font-family:"Sniglet", "Comic Sans MS", cursive;
+  font-size:.95rem;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#4e1730;
+  background:linear-gradient(130deg, #ffe5f4, #ffbedf);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, .35) inset,
+    0 6px 14px rgba(255, 96, 170, .28);
+  cursor:pointer;
+  transition:transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+}
+
+button.nextBtn:hover{
+  transform:translateY(-2px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, .4) inset,
+    0 8px 16px rgba(255, 96, 170, .35);
+}
+
+button.nextBtn:active{
+  transform:translateY(0);
+}
+
+button.nextBtn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+  transform:none;
+}
+
+#scene1{
+  justify-content:flex-start;
+  padding-top:36px;
+}
+
+.hero{
+  text-align:center;
+  margin-bottom:8px;
+}
+
+#roseStage{
+  position:relative;
+  width:min(92vw, 450px);
+  height:min(74vh, 640px);
+}
+
+#roseAura{
+  position:absolute;
+  left:50%;
+  top:34%;
+  width:280px;
+  height:280px;
+  transform:translate(-50%, -50%);
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,112,175,.36), rgba(255,112,175,0) 68%);
+  animation:pulse 2.7s ease-in-out infinite;
+}
+
+#stem{
+  position:absolute;
+  left:50%;
+  bottom:34px;
+  width:11px;
+  height:0;
+  transform:translateX(-50%);
+  border-radius:999px;
+  background:linear-gradient(180deg, #b2f8c5, #3c9c64 68%, #2b754b 100%);
+  box-shadow:
+    0 0 10px rgba(148, 238, 173, .46),
+    inset 0 0 6px rgba(255,255,255,.22);
+  transition:height 3.45s cubic-bezier(.18,.82,.26,1);
+}
+
+.leaf{
+  position:absolute;
+  width:62px;
+  height:30px;
+  border-radius:86% 14% 80% 20% / 65% 35% 65% 35%;
+  background:linear-gradient(145deg, #a3f2ba, #42a76c);
+  box-shadow:0 0 12px rgba(130, 236, 164, .5);
+  opacity:0;
+  transition:opacity 1.1s ease 1s;
+}
+
+.leaf.left{
+  left:50%;
+  bottom:170px;
+  transform:translateX(-100%) rotate(-32deg);
+}
+
+.leaf.right{
+  left:50%;
+  bottom:232px;
+  transform:translateX(0) rotate(24deg) scaleX(-1);
+}
+
+#scene1.bloomed .leaf{
+  opacity:1;
+}
+
+#roseHead{
+  position:absolute;
+  left:50%;
+  top:34%;
+  width:280px;
+  height:280px;
+  transform:translate(-50%, -50%);
+  pointer-events:none;
+  filter:drop-shadow(0 0 14px rgba(255, 93, 163, .34));
+}
+
+.petal{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:54px;
+  height:72px;
+  border-radius:54% 54% 44% 44% / 72% 72% 34% 34%;
+  background:radial-gradient(circle at 35% 26%, #fff4fa 0%, #ffc7e1 45%, #f362a5 74%, #ad255d 100%);
+  box-shadow:
+    inset -3px -8px 10px rgba(108, 17, 56, .28),
+    0 0 8px rgba(255, 114, 180, .24);
+  transform-origin:50% 78%;
+  opacity:0;
+  will-change:transform;
+}
+
+.sceneHint{
+  margin:2px 0 0 0;
+  font-size:1.15rem;
+  color:rgba(255, 221, 238, .82);
+  text-shadow:none;
+}
+
+#scene2 .panel{
+  text-align:center;
+  width:min(92vw, 700px);
+}
+
+#tapFlowerWrap{
+  display:flex;
+  justify-content:center;
+  margin-top:6px;
+}
+
+#tapFlower{
+  position:relative;
+  width:240px;
+  height:260px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  padding:0;
+}
+
+#tapFlower::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:34%;
+  width:142px;
+  height:142px;
+  transform:translate(-50%, -50%);
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,145,200,.3), rgba(255,145,200,0) 70%);
+}
+
+#tapFlower.pulse{
+  animation:tapPulse .3s ease;
+}
+
+.tapStem{
+  position:absolute;
+  left:50%;
+  bottom:24px;
+  width:9px;
+  height:145px;
+  transform:translateX(-50%);
+  border-radius:999px;
+  background:linear-gradient(180deg, #9aefb4, #2b8752);
+  box-shadow:0 0 9px rgba(134, 234, 163, .42);
+}
+
+.tapStem::before,
+.tapStem::after{
+  content:"";
+  position:absolute;
+  width:42px;
+  height:21px;
+  border-radius:86% 14% 80% 20% / 65% 35% 65% 35%;
+  background:linear-gradient(145deg, #a7f8c0, #47ab71);
+}
+
+.tapStem::before{
+  right:3px;
+  top:58px;
+  transform:rotate(-32deg);
+}
+
+.tapStem::after{
+  left:3px;
+  top:92px;
+  transform:rotate(28deg) scaleX(-1);
+}
+
+.tapHead{
+  position:absolute;
+  left:50%;
+  top:35%;
+  width:162px;
+  height:162px;
+  transform:translate(-50%, -50%);
+  filter:drop-shadow(0 0 12px rgba(255, 104, 176, .36));
+}
+
+.tapPetal{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:28px;
+  height:42px;
+  border-radius:54% 54% 42% 42% / 70% 70% 30% 30%;
+  background:radial-gradient(circle at 36% 24%, #fff4fb 0%, #ffc8e3 42%, #f46ea9 76%, #b92f6b 100%);
+  box-shadow:0 0 5px rgba(255, 126, 189, .24);
+  transform-origin:50% 82%;
+}
+
+.tapCenter{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:36px;
+  height:36px;
+  transform:translate(-50%, -50%);
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 30%, #ffe6f4, #ff94c7 65%, #d04a84);
+  box-shadow:0 0 8px rgba(255, 122, 185, .28);
+}
+
+#tapPrompt{
+  margin:8px 0 0 0;
+  color:rgba(255, 226, 241, .88);
+  font-size:1rem;
+}
+
+.tapMessage{
+  margin:8px auto 0 auto;
+  min-height:64px;
+  max-width:560px;
+  padding:10px 14px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.12);
+  color:#fff8fc;
+  font-size:1.18rem;
+  line-height:1.25;
+  opacity:.45;
+  transform:translateY(4px);
+  transition:opacity .28s ease, transform .28s ease;
+}
+
+.tapMessage.show{
+  opacity:1;
+  transform:translateY(0);
+}
+
+#scene3 .panel{
+  width:min(92vw, 640px);
+  text-align:center;
+}
+
+#envelopeWrap{
+  position:relative;
+  width:min(84vw, 370px);
+  height:min(52vw, 228px);
+  margin:8px auto 0 auto;
+  perspective:1100px;
+  cursor:pointer;
+}
+
+#envBody{
+  position:absolute;
+  inset:0;
+  border-radius:12px;
+  background:linear-gradient(155deg, #fff6fb, #ffd9eb);
+  box-shadow:0 14px 30px rgba(42, 5, 22, .42);
+  overflow:hidden;
+}
+
+#envBody::before{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  margin:auto;
+  width:90%;
+  height:68%;
+  clip-path:polygon(0 0, 50% 68%, 100% 0, 100% 100%, 0 100%);
+  background:#ffc8e1;
+}
+
+#envFlap{
+  position:absolute;
+  inset:0;
+  border-radius:12px;
+  background:linear-gradient(180deg, #ffd6e8, #ffb6d7);
+  clip-path:polygon(0 0, 100% 0, 50% 62%);
+  transform-origin:50% 0%;
+  transition:transform .9s ease;
+  z-index:4;
+  backface-visibility:hidden;
+}
+
+#seal{
+  position:absolute;
+  left:50%;
+  top:44%;
+  width:44px;
+  height:44px;
+  transform:translate(-50%, -50%);
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 30%, #ffd6ea, #f55b9e 70%, #bd1c63);
+  box-shadow:0 0 16px rgba(247, 101, 165, .62);
+  z-index:5;
+  transition:opacity .45s ease, transform .45s ease;
+}
+
+#seal::before{
+  content:"\2764";
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  color:#fff1f8;
+  font-size:1rem;
+}
+
+#letterCard{
+  margin:14px auto 0 auto;
+  width:min(86vw, 520px);
+  max-height:0;
+  overflow:hidden;
+  opacity:0;
+  transform:translateY(16px) scale(.95);
+  padding:0 16px;
+  border-radius:16px;
+  background:linear-gradient(160deg, rgba(255,255,255,.92), rgba(255,239,247,.96));
+  color:#732247;
+  text-align:left;
+  font-size:1.05rem;
+  line-height:1.35;
+  white-space:pre-line;
+  box-shadow:0 14px 24px rgba(42, 8, 25, .25);
+  transition:max-height .9s ease, opacity .55s ease .2s, transform .55s ease .2s, padding .5s ease;
+}
+
+.letterPanel.opened #envFlap{
+  transform:rotateX(168deg);
+}
+
+.letterPanel.opened #seal{
+  opacity:0;
+  transform:translate(-50%, -48%) scale(.75);
+}
+
+.letterPanel.opened #letterCard{
+  max-height:min(66vh, 420px);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  opacity:1;
+  transform:translateY(0) scale(1);
+  padding:16px 16px;
+}
+
+.nextHint{
+  margin:6px 0 0 0;
+  font-size:.92rem;
+  color:rgba(255, 222, 239, .88);
+}
+
+#scene4 .panel,
+#scene6 .panel,
+#scene7 .panel{
+  width:min(94vw, 980px);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:18px;
+  width:100%;
+}
+
+.songCard,
+.featureCard,
+.noteCard{
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.22);
+  background:linear-gradient(150deg, rgba(255,255,255,.2), rgba(255,255,255,.08));
+  box-shadow:0 12px 28px rgba(19, 2, 12, .45);
+}
+
+.songCard{
+  padding:18px;
+}
+
+.songCard h4,
+.featureCard p,
+.quoteText,
+.noteCard h4{
+  font-family:"Sniglet", "Comic Sans MS", cursive;
+  font-weight:400;
+  letter-spacing:.02em;
+}
+
+.songCard h4{
+  margin:0 0 5px 0;
+  font-size:1.5rem;
+  color:#ffe8f4;
+}
+
+.songCard p{
+  margin:0 0 12px 0;
+  color:rgba(255, 226, 241, .86);
+}
+
+.songControls{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:10px;
+}
+
+.playBtn{
+  border:none;
+  border-radius:999px;
+  padding:7px 11px;
+  min-width:66px;
+  font-family:"Sniglet", "Comic Sans MS", cursive;
+  font-size:.8rem;
+  background:#ffd6ea;
+  color:#5a1e3a;
+  cursor:pointer;
+}
+
+.progress{
+  position:relative;
+  height:8px;
+  border-radius:999px;
+  background:rgba(255, 255, 255, .2);
+  overflow:hidden;
+  cursor:pointer;
+}
+
+.progressFill{
+  position:absolute;
+  inset:0 auto 0 0;
+  width:0%;
+  border-radius:inherit;
+  background:linear-gradient(90deg, #ff9ecf, #ff6fae);
+}
+
+.timeLabel{
+  min-width:78px;
+  text-align:right;
+  font-size:.76rem;
+  color:rgba(255, 234, 246, .86);
+}
+
+.songAudio{
+  display:none;
+}
+
+#scene5 .panel{
+  width:min(92vw, 760px);
+  text-align:center;
+}
+
+.messageStack{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+  margin-top:8px;
+}
+
+.noteCard{
+  padding:12px 14px;
+  text-align:left;
+  opacity:0;
+  transform:translateY(10px) scale(.98);
+}
+
+.noteCard h4{
+  margin:0 0 4px 0;
+  font-size:1.05rem;
+  color:var(--pink-100);
+}
+
+.noteCard p{
+  margin:0;
+  color:rgba(255, 235, 245, .9);
+  line-height:1.25;
+}
+
+#scene5.active .noteCard{
+  animation:noteIn .62s forwards;
+  animation-delay:var(--delay);
+}
+
+#scene7 .panel{
+  width:min(92vw, 900px);
+  text-align:center;
+}
+
+.galleryGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+  gap:14px;
+  margin-top:8px;
+}
+
+.galleryCard{
+  border-radius:16px;
+  border:1px solid rgba(255, 255, 255, .2);
+  overflow:hidden;
+  background:linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+}
+
+.galleryCard img{
+  width:100%;
+  height:165px;
+  object-fit:cover;
+  display:block;
+}
+
+.galleryCard p{
+  margin:0;
+  padding:8px 10px;
+  font-size:.95rem;
+  color:rgba(255, 236, 246, .92);
+}
+
+#scene8 .panel{
+  width:min(92vw, 760px);
+  text-align:center;
+}
+
+.quoteText{
+  margin:8px auto 4px auto;
+  font-size:clamp(1.6rem, 3.4vw, 2.3rem);
+  line-height:1.2;
+  color:#fff6fb;
+  text-shadow:0 1px 0 rgba(255, 255, 255, .08);
+}
+
+.quoteAuthor{
+  margin:0;
+  font-size:1rem;
+  color:rgba(255, 220, 239, .86);
+}
+
+.featureCard{
+  overflow:hidden;
+  opacity:0;
+  transform:translateY(14px);
+  animation:cardIn .75s forwards;
+}
+
+.featureCard img{
+  width:100%;
+  height:220px;
+  object-fit:cover;
+}
+
+.featureCard p{
+  margin:0;
+  padding:12px;
+  font-size:1.23rem;
+  color:#fff2fa;
+}
+
+@keyframes pulse{
+  0%,100%{ transform:translate(-50%, -50%) scale(1); opacity:.72; }
+  50%{ transform:translate(-50%, -50%) scale(1.08); opacity:1; }
+}
+
+@keyframes tapPulse{
+  0%{ transform:scale(1); }
+  50%{ transform:scale(1.04); }
+  100%{ transform:scale(1); }
+}
+
+@keyframes cardIn{
+  to{ opacity:1; transform:translateY(0); }
+}
+
+@keyframes noteIn{
+  to{ opacity:1; transform:translateY(0) scale(1); }
+}
+
+@keyframes particleFloat{
+  0%{ transform:translate3d(0, 0, 0) scale(.8); opacity:0; }
+  10%{ opacity:.45; }
+  90%{ opacity:.32; }
+  100%{ transform:translate3d(var(--drift), -118vh, 0) scale(1.15); opacity:0; }
+}
+
+@keyframes heartFloat{
+  0%{ transform:translate3d(0, 0, 0) rotate(45deg) scale(.72); opacity:0; }
+  12%{ opacity:.74; }
+  100%{ transform:translate3d(var(--drift), -122vh, 0) rotate(45deg) scale(1.1); opacity:0; }
+}
+
+@keyframes drift{
+  0%{ transform:translate3d(0, 0, 0); }
+  100%{ transform:translate3d(14px, -18px, 0); }
+}
+
+@media (max-width:740px){
+  .scene{
+    gap:12px;
+    justify-content:flex-start;
+    padding:
+      calc(14px + env(safe-area-inset-top))
+      calc(14px + env(safe-area-inset-right))
+      calc(14px + env(safe-area-inset-bottom))
+      calc(14px + env(safe-area-inset-left));
+  }
+  .sceneTitle{ font-size:clamp(1.9rem, 9vw, 2.8rem); }
+  .sceneHint{ font-size:1rem; text-align:center; }
+  #scene1{ padding-top:calc(24px + env(safe-area-inset-top)); }
+  #roseStage{ height:min(69vh, 540px); }
+  #stem{ bottom:10px; }
+  .panel{ border-radius:24px; padding:18px 14px; }
+  .grid{ grid-template-columns:1fr; gap:12px; }
+  .songControls{ grid-template-columns:auto 1fr; }
+  .timeLabel{ grid-column:1 / -1; text-align:left; min-width:0; }
+  #tapFlower{ width:210px; height:240px; }
+  .tapMessage{ min-height:76px; font-size:1.05rem; }
+  #letterCard{ font-size:.98rem; }
+  .featureCard img{ height:176px; }
+  .galleryCard img{ height:145px; }
+  #scene8{ justify-content:center; }
+}
+
+@media (max-width:480px){
+  .sceneTag{ font-size:.68rem; letter-spacing:.14em; }
+  .panel{ border-radius:20px; padding:16px 12px; }
+  button.nextBtn{ width:100%; max-width:260px; }
+  #roseAura,
+  #roseHead{ width:232px; height:232px; }
+  .leaf.left{ bottom:148px; }
+  .leaf.right{ bottom:198px; }
+  #tapFlower{ width:188px; height:216px; }
+  .tapHead{ width:146px; height:146px; }
+  .tapStem{ height:126px; }
+  #envelopeWrap{
+    width:min(90vw, 330px);
+    height:min(56vw, 204px);
+  }
+  .galleryGrid{ grid-template-columns:1fr; }
+  .featureCard p{ font-size:1.08rem; }
+}
+
+@media (max-height:760px){
+  .scene{ justify-content:flex-start; }
+  #scene1{ padding-top:calc(18px + env(safe-area-inset-top)); }
+  #roseStage{ height:min(62vh, 500px); }
+  #scene8{ justify-content:center; }
+}
+
+@media (max-height:620px){
+  #roseStage{ height:min(58vh, 430px); }
+  #letterCard{
+    font-size:.94rem;
+    max-height:min(70vh, 420px);
+  }
+  #scene8{ justify-content:center; }
+}
+
+@media (max-height:500px) and (orientation:landscape){
+  .scene{ gap:10px; }
+  .sceneTitle{ font-size:clamp(1.5rem, 5vw, 2.2rem); }
+  #roseStage{ height:min(72vh, 360px); }
+  #tapFlower{ width:170px; height:190px; }
+}
+</style>
+</head>
+<body>
+<div class="ambient" id="particleField"></div>
+<div class="ambient" id="heartField"></div>
+
+<div class="scene active" id="scene1">
+  <div class="hero">
+    <p class="sceneTag">A little surprise for you my baby</p>
+    <h1 class="sceneTitle">Happy Rose Day Shereeen!</h1>
+  </div>
+  <div id="roseStage">
+    <div id="roseAura"></div>
+    <div id="stem"></div>
+    <div class="leaf left"></div>
+    <div class="leaf right"></div>
+    <div id="roseHead"></div>
+  </div>
+  <p class="sceneHint">A glowing rose blooms for you everyday.</p>
+</div>
+
+<div class="scene" id="scene2">
+  <div class="panel">
+    <p class="sceneTag">Tap the bloom</p>
+    <h2 class="sceneTitle">A Soft Thought</h2>
+    <div id="tapFlowerWrap">
+      <button id="tapFlower" type="button" aria-label="Tap flower for message">
+        <div class="tapStem"></div>
+        <div class="tapHead" id="tapHead"></div>
+      </button>
+    </div>
+    <p id="tapPrompt">Tap the flower and collect cute thoughts.</p>
+    <p class="tapMessage" id="tapMessage">Your first tiny message is waiting.</p>
+    <button class="nextBtn" id="softNextBtn" onclick="nextScene()" disabled>Continue</button>
+  </div>
+</div>
+
+<div class="scene" id="scene3">
+  <div class="panel letterPanel" id="letterPanel">
+    <p class="sceneTag">Sealed with love</p>
+    <h2 class="sceneTitle">A Little Letter</h2>
+    <div id="envelopeWrap" aria-label="Open letter" role="button" tabindex="0">
+      <div id="envBody"></div>
+      <div id="envFlap"></div>
+      <div id="seal"></div>
+    </div>
+    <div id="letterCard"></div>
+    <p class="nextHint" id="letterHint">Tap the envelope</p>
+  </div>
+</div>
+
+<div class="scene" id="scene4">
+  <div class="panel">
+    <p class="sceneTag">Playful playlist</p>
+    <h2 class="sceneTitle">Songs For Us</h2>
+    <div class="grid" id="songsGrid"></div>
+    <button class="nextBtn" onclick="nextScene()">Next</button>
+  </div>
+</div>
+
+<div class="scene" id="scene5">
+  <div class="panel">
+    <p class="sceneTag">Five tiny notes</p>
+    <h2 class="sceneTitle">Just For You</h2>
+    <div class="messageStack" id="messageStack"></div>
+    <button class="nextBtn" onclick="nextScene()">Next</button>
+  </div>
+</div>
+
+<div class="scene" id="scene6">
+  <div class="panel">
+    <p class="sceneTag">Everyday magic</p>
+    <h2 class="sceneTitle">What I Adore</h2>
+    <div class="grid" id="featuresGrid"></div>
+    <button class="nextBtn" onclick="nextScene()">Next</button>
+  </div>
+</div>
+
+<div class="scene" id="scene7">
+  <div class="panel">
+    <p class="sceneTag">Tiny memories</p>
+    <h2 class="sceneTitle">Favorite Gallery</h2>
+    <div class="galleryGrid" id="galleryGrid"></div>
+    <button class="nextBtn" onclick="nextScene()">Next</button>
+  </div>
+</div>
+
+<div class="scene" id="scene8">
+  <div class="panel">
+    <p class="sceneTag">A quote screen</p>
+    <h2 class="sceneTitle">One Sweet Quote</h2>
+    <blockquote class="quoteText" id="quoteText"></blockquote>
+    <p class="quoteAuthor" id="quoteAuthor"></p>
+  </div>
+</div>
+
+<script>
+const CONFIG = {
+  loveLetter:
+`My love,
+
+I do not know how to write something perfect,
+but I know exactly how you make me feel.
+
+You make my ordinary days feel gentle.
+You make silence feel safe.
+You make smiles come naturally.
+You make my heart race.
+You make me feel loved and cared for.
+And most importantly you make me feel understood and seen.
+Thank you for everything Shereen.
+
+This rose blooms today only because of you.
+
+Always yours.`,
+  tapMessages: [
+    "You make my day feel warmer in seconds.",
+    "Your smile is my favorite weather.",
+    "Even silence feels cozy with you.",
+    "You turn little moments into memories.",
+    "You are my softest, happiest thought.",
+    "Your laugh is my instant comfort.",
+    "I still blush when I think of you."
+  ],
+  notes: [
+    "I adore how your eyes are so shiny.",
+    "You make hard days feel soft and manageable.",
+    "Your presence feels like home to my heart.",
+    "You are always beautiful, even in ordinary moments and the low days.",
+    "Thank you for being you. Every single day."
+  ],
+  quote: {
+    text: "In all the world, there is no heart for me like yours.",
+    author: "- Maya Angelou"
+  },
+  songs: [
+    { title: "Chaandni", artist: "Sufr", file: "audio/chaandni.mp3" },
+    { title: "Bargad", artist: "Arpit", file: "audio/bargad.mp3" }
+  ],
+  features: [
+    { image: "images/eyes.png", caption: "Her eyes" },
+    { image: "images/smiles.png", caption: "Her smile" },
+    { image: "images/cuteness.png", caption: "Her cuteness" }
+  ],
+  gallery: [
+    { image: "images/faveyes.png", caption: "My favorite eyes" },
+    { image: "images/softsmile.png", caption: "That soft smile" },
+    { image: "images/shocked.png", caption: "Her with glasses" },
+    { image: "images/hawt.png", caption: "Her being hawt ash" }
+  ]
+};
+
+let current = 0;
+const scenes = document.querySelectorAll(".scene");
+
+function showScene(index){
+  scenes.forEach((scene) => scene.classList.remove("active"));
+  scenes[index].classList.add("active");
+  current = index;
+  document.body.classList.toggle("after-first", index > 0);
+}
+
+function nextScene(){
+  if(current < scenes.length - 1){
+    showScene(current + 1);
+  }
+}
+
+const stem = document.getElementById("stem");
+const roseHead = document.getElementById("roseHead");
+const scene1 = document.getElementById("scene1");
+
+function bloomRose(){
+  stem.style.height = "336px";
+  scene1.classList.add("bloomed");
+  setTimeout(createPetals, 3350);
+}
+
+function createPetals(){
+  roseHead.innerHTML = "";
+  const rings = [
+    { count: 7, radius: 14, scale: 0.68, angleOffset: 4 },
+    { count: 10, radius: 30, scale: 0.82, angleOffset: 10 },
+    { count: 14, radius: 49, scale: 0.95, angleOffset: 0 },
+    { count: 18, radius: 69, scale: 1.08, angleOffset: 8 }
+  ];
+
+  let step = 0;
+
+  rings.forEach((ring, ringIndex) => {
+    for(let i = 0; i < ring.count; i++){
+      const petal = document.createElement("div");
+      petal.className = "petal";
+      roseHead.appendChild(petal);
+
+      const angleDeg = (360 / ring.count) * i + ring.angleOffset;
+      const angle = angleDeg * (Math.PI / 180);
+      const tx = Math.cos(angle) * ring.radius;
+      const ty = Math.sin(angle) * ring.radius * 0.84;
+      const spin = angleDeg + 90 + ringIndex * 3;
+
+      petal.style.transform = "translate(-50%, -50%) scale(0.12) rotate(-24deg)";
+
+      setTimeout(() => {
+        petal.style.transition = "transform 1.65s cubic-bezier(.18,.82,.26,1), opacity .95s ease";
+        petal.style.opacity = "1";
+        petal.style.transform =
+          `translate(-50%, -50%) translate(${tx}px, ${ty}px) rotate(${spin}deg) scale(${ring.scale})`;
+      }, step * 65);
+
+      step++;
+    }
+  });
+
+  for(let i = 0; i < 4; i++){
+    const centerPetal = document.createElement("div");
+    centerPetal.className = "petal";
+    centerPetal.style.width = "42px";
+    centerPetal.style.height = "56px";
+    centerPetal.style.opacity = "0";
+    centerPetal.style.transform = "translate(-50%, -50%) scale(0.1)";
+    roseHead.appendChild(centerPetal);
+
+    setTimeout(() => {
+      centerPetal.style.transition = "transform 1.2s ease, opacity .8s ease";
+      centerPetal.style.opacity = "1";
+      centerPetal.style.transform = `translate(-50%, -50%) rotate(${i * 30}deg) scale(.62)`;
+    }, step * 60 + i * 70);
+  }
+
+  setTimeout(() => nextScene(), step * 65 + 2600);
+}
+
+function buildTapFlower(){
+  const tapHead = document.getElementById("tapHead");
+  tapHead.innerHTML = "";
+
+  const rings = [
+    { count: 10, radius: 44, scale: 1 },
+    { count: 8, radius: 28, scale: 0.9 }
+  ];
+
+  rings.forEach((ring) => {
+    for(let i = 0; i < ring.count; i++){
+      const p = document.createElement("span");
+      p.className = "tapPetal";
+      const angleDeg = (360 / ring.count) * i;
+      const angle = angleDeg * (Math.PI / 180);
+      const x = Math.cos(angle) * ring.radius;
+      const y = Math.sin(angle) * ring.radius * 0.86;
+      p.style.transform =
+        `translate(-50%, -50%) translate(${x}px, ${y}px) rotate(${angleDeg + 90}deg) scale(${ring.scale})`;
+      tapHead.appendChild(p);
+    }
+  });
+
+  const center = document.createElement("span");
+  center.className = "tapCenter";
+  tapHead.appendChild(center);
+}
+
+const tapFlower = document.getElementById("tapFlower");
+const tapMessage = document.getElementById("tapMessage");
+const tapPrompt = document.getElementById("tapPrompt");
+const softNextBtn = document.getElementById("softNextBtn");
+let tapMessageIndex = 0;
+
+function revealTapMessage(){
+  const message = CONFIG.tapMessages[tapMessageIndex % CONFIG.tapMessages.length];
+  tapMessage.textContent = message;
+  tapMessage.classList.remove("show");
+  void tapMessage.offsetWidth;
+  tapMessage.classList.add("show");
+
+  const count = tapMessageIndex + 1;
+  tapPrompt.textContent = `Thought ${Math.min(count, CONFIG.tapMessages.length)} of ${CONFIG.tapMessages.length}`;
+  tapFlower.classList.add("pulse");
+  setTimeout(() => tapFlower.classList.remove("pulse"), 280);
+
+  if(softNextBtn.disabled){
+    softNextBtn.disabled = false;
+  }
+
+  tapMessageIndex++;
+}
+
+tapFlower.addEventListener("click", revealTapMessage);
+
+const envelopeWrap = document.getElementById("envelopeWrap");
+const letterPanel = document.getElementById("letterPanel");
+const letterCard = document.getElementById("letterCard");
+const letterHint = document.getElementById("letterHint");
+let letterOpened = false;
+
+letterCard.textContent = CONFIG.loveLetter;
+
+function openLetter(){
+  if(letterOpened){
+    nextScene();
+    return;
+  }
+
+  letterOpened = true;
+  letterPanel.classList.add("opened");
+  letterHint.textContent = "Scroll and read, then tap the envelope again to continue.";
+}
+
+envelopeWrap.addEventListener("click", openLetter);
+envelopeWrap.addEventListener("keydown", (event) => {
+  if(event.key === "Enter" || event.key === " "){
+    event.preventDefault();
+    openLetter();
+  }
+});
+
+const songsGrid = document.getElementById("songsGrid");
+CONFIG.songs.forEach((song) => {
+  const card = document.createElement("div");
+  card.className = "songCard";
+  card.innerHTML = `
+    <h4>${song.title}</h4>
+    <p>${song.artist}</p>
+    <div class="songControls">
+      <button type="button" class="playBtn">Play</button>
+      <div class="progress" aria-label="${song.title} progress">
+        <div class="progressFill"></div>
+      </div>
+      <span class="timeLabel">0:00 / 0:00</span>
+    </div>
+    <audio class="songAudio" preload="metadata" src="${song.file}"></audio>
+  `;
+  songsGrid.appendChild(card);
+  initSongPlayer(card);
+});
+
+function formatTime(seconds){
+  if(!Number.isFinite(seconds)){
+    return "0:00";
+  }
+
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function pauseOtherPlayers(activeAudio){
+  document.querySelectorAll(".songAudio").forEach((audio) => {
+    if(audio !== activeAudio){
+      audio.pause();
+      const card = audio.closest(".songCard");
+      if(card){
+        const btn = card.querySelector(".playBtn");
+        if(btn){
+          btn.textContent = "Play";
+        }
+      }
+    }
+  });
+}
+
+function initSongPlayer(card){
+  const playBtn = card.querySelector(".playBtn");
+  const progress = card.querySelector(".progress");
+  const progressFill = card.querySelector(".progressFill");
+  const timeLabel = card.querySelector(".timeLabel");
+  const audio = card.querySelector(".songAudio");
+
+  const updateUI = () => {
+    const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+    const current = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+    const percent = duration > 0 ? (current / duration) * 100 : 0;
+    progressFill.style.width = `${percent}%`;
+    timeLabel.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+  };
+
+  playBtn.addEventListener("click", () => {
+    if(audio.paused){
+      pauseOtherPlayers(audio);
+      const playPromise = audio.play();
+      playBtn.textContent = "Pause";
+      if(playPromise && typeof playPromise.catch === "function"){
+        playPromise.catch(() => {
+          playBtn.textContent = "Play";
+        });
+      }
+    }else{
+      audio.pause();
+      playBtn.textContent = "Play";
+    }
+  });
+
+  progress.addEventListener("click", (event) => {
+    const rect = progress.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    if(Number.isFinite(audio.duration)){
+      audio.currentTime = audio.duration * ratio;
+      updateUI();
+    }
+  });
+
+  audio.addEventListener("loadedmetadata", updateUI);
+  audio.addEventListener("timeupdate", updateUI);
+  audio.addEventListener("durationchange", updateUI);
+  audio.addEventListener("play", () => {
+    playBtn.textContent = "Pause";
+  });
+  audio.addEventListener("pause", () => {
+    if(!audio.ended){
+      playBtn.textContent = "Play";
+    }
+  });
+  audio.addEventListener("ended", () => {
+    playBtn.textContent = "Play";
+    updateUI();
+  });
+}
+
+const messageStack = document.getElementById("messageStack");
+CONFIG.notes.forEach((note, i) => {
+  const card = document.createElement("div");
+  card.className = "noteCard";
+  card.style.setProperty("--delay", `${i * 0.14}s`);
+  card.innerHTML = `
+    <h4>Message ${i + 1}</h4>
+    <p>${note}</p>
+  `;
+  messageStack.appendChild(card);
+});
+
+document.getElementById("quoteText").textContent = `\u201C${CONFIG.quote.text}\u201D`;
+document.getElementById("quoteAuthor").textContent = CONFIG.quote.author;
+
+const featuresGrid = document.getElementById("featuresGrid");
+CONFIG.features.forEach((item, i) => {
+  const card = document.createElement("div");
+  card.className = "featureCard";
+  card.style.animationDelay = `${i * 0.14}s`;
+  card.innerHTML = `
+    <img src="${item.image}" alt="${item.caption}">
+    <p>${item.caption}</p>
+  `;
+  featuresGrid.appendChild(card);
+});
+
+const galleryGrid = document.getElementById("galleryGrid");
+CONFIG.gallery.forEach((item) => {
+  const card = document.createElement("div");
+  card.className = "galleryCard";
+  card.innerHTML = `
+    <img src="${item.image}" alt="${item.caption}">
+    <p>${item.caption}</p>
+  `;
+  galleryGrid.appendChild(card);
+});
+
+function createParticles(){
+  const field = document.getElementById("particleField");
+  const count = 34;
+
+  for(let i = 0; i < count; i++){
+    const p = document.createElement("span");
+    p.className = "particle";
+    p.style.setProperty("--left", `${Math.random() * 100}%`);
+    p.style.setProperty("--size", `${2 + Math.random() * 5}px`);
+    p.style.setProperty("--dur", `${8 + Math.random() * 8}s`);
+    p.style.setProperty("--delay", `${Math.random() * -14}s`);
+    p.style.setProperty("--drift", `${(Math.random() - 0.5) * 80}px`);
+    field.appendChild(p);
+  }
+}
+
+function createHearts(){
+  const field = document.getElementById("heartField");
+  const count = 16;
+
+  for(let i = 0; i < count; i++){
+    const h = document.createElement("span");
+    h.className = "heartParticle";
+    h.style.setProperty("--left", `${Math.random() * 100}%`);
+    h.style.setProperty("--size", `${8 + Math.random() * 14}px`);
+    h.style.setProperty("--dur", `${11 + Math.random() * 9}s`);
+    h.style.setProperty("--delay", `${Math.random() * -20}s`);
+    h.style.setProperty("--drift", `${(Math.random() - 0.5) * 140}px`);
+    field.appendChild(h);
+  }
+}
+
+window.onload = () => {
+  createParticles();
+  createHearts();
+  buildTapFlower();
+  bloomRose();
+};
+</script>
+</body>
+</html>
