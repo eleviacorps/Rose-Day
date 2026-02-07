@@ -1,0 +1,7 @@
+﻿# Ignore media assets
+/audio/*
+/images/*
+
+# Keep folders if needed
+!/audio/.gitkeep
+!/images/.gitkeep
